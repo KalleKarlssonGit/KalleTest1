@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 
 import se.atg.service.harrykart.domain.HarryResponse;
 import se.atg.service.harrykart.domain.Ranking;
+import se.atg.service.harrykart.exc.HarryServiceException;
+import se.atg.service.harrykart.exc.ResourceNotFoundException;
 import se.atg.service.harrykart.generated.HarryKartType;
 import se.atg.service.harrykart.generated.LaneType;
 import se.atg.service.harrykart.generated.LoopType;
@@ -24,12 +26,9 @@ public class HarryKartServiceImpl implements HarryKartService {
 	private static final Logger logger = Logger.getLogger(HarryKartServiceImpl.class);
 
 	@Override
-	public HarryResponse getHarryResponse(JAXBElement<HarryKartType> hkt) throws RuntimeException {
+	public HarryResponse getHarryResponse(JAXBElement<HarryKartType> hkt) throws HarryServiceException, ResourceNotFoundException {
 
-		if (!validate(hkt)) {
-			logger.error("HarryKartServiceImpl getHarryResponse, Wrong input data. ts:" + System.currentTimeMillis());
-			throw new RuntimeException("Wrong input data.");
-		}
+		validate(hkt);
 
 		TreeMap<Double, List<ParticipantType>> calculatedTimes = calculate(hkt);
 
@@ -43,7 +42,7 @@ public class HarryKartServiceImpl implements HarryKartService {
 	 * @param calculatedTimes
 	 * @return
 	 */
-	private List<Ranking> getTop3RankingList(TreeMap<Double, List<ParticipantType>> calculatedTimes) {
+	private List<Ranking> getTop3RankingList(TreeMap<Double, List<ParticipantType>> calculatedTimes) throws HarryServiceException {
 		List<Ranking> rankingList = new ArrayList<>();
 
 		for (Map.Entry<Double, List<ParticipantType>> entry : calculatedTimes.entrySet()) {
@@ -52,6 +51,14 @@ public class HarryKartServiceImpl implements HarryKartService {
 					rankingList.add(new Ranking((rankingList.size() + 1), participantType.getName()));
 				}
 			}
+		}
+
+//		if (rankingList.size() < 1) {
+//			throw new ResourceNotFoundException("Tom returlista");
+//		}
+
+		if (rankingList.size() < 1) {
+			throw new HarryServiceException("Tom returlista");
 		}
 
 		return rankingList;
@@ -65,7 +72,7 @@ public class HarryKartServiceImpl implements HarryKartService {
 	 * 					value: list of participants for this key
 	 * @throws RuntimeException
 	 */
-	private TreeMap<Double, List<ParticipantType>> calculate(JAXBElement<HarryKartType> hkt) throws RuntimeException {
+	private TreeMap<Double, List<ParticipantType>> calculate(JAXBElement<HarryKartType> hkt) {
 
 		BigInteger numberOfLoops = hkt.getValue().getNumberOfLoops();
 
@@ -117,7 +124,7 @@ public class HarryKartServiceImpl implements HarryKartService {
 					}
 
 					if (!disqualifyHorse) {
-						timeToCompleteRace += (1000 / speed);
+						timeToCompleteRace += (1000 / (double)speed);
 					}
 
 				}
@@ -151,8 +158,8 @@ public class HarryKartServiceImpl implements HarryKartService {
 	 * @param hkt
 	 * @return
 	 */
-	private boolean validate(JAXBElement<HarryKartType> hkt) {
-		return (
+	private void validate(JAXBElement<HarryKartType> hkt) throws HarryServiceException {
+		if (
 				(hkt != null)
 				&&
 				(hkt.getValue() != null)
@@ -172,7 +179,15 @@ public class HarryKartServiceImpl implements HarryKartService {
 				(hkt.getValue().getPowerUps().getLoop() != null)
 				&&
 				(hkt.getValue().getPowerUps().getLoop().size() > 0)
-				);
+				) {
+		} else {
+			// throws HarryServiceException, ResourceNotFoundException
+//			if () {
+				logger.error("HarryKartServiceImpl getHarryResponse, Wrong input data. ts:" + System.currentTimeMillis());
+				throw new HarryServiceException("Invalid input data.");
+//			}
+		}
+
 	}
 
 }
