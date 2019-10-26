@@ -9,14 +9,15 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import se.atg.service.harrykart.exc.ExceptionResponse;
-import se.atg.service.harrykart.exc.ResourceNotFoundException;
+import se.atg.service.harrykart.exc.HarryEmptyException;
+import se.atg.service.harrykart.exc.HarryServiceException;
 
 @ControllerAdvice
 public class ExceptionHandlerControllerAdvice {
 
-	@ExceptionHandler(ResourceNotFoundException.class)
-	@ResponseStatus(value = HttpStatus.NOT_FOUND)
-	public @ResponseBody ExceptionResponse handleResourceNotFound(final ResourceNotFoundException exception, final HttpServletRequest request) {
+	@ExceptionHandler(HarryEmptyException.class)
+	@ResponseStatus(value = HttpStatus.NO_CONTENT)
+	public @ResponseBody ExceptionResponse handleResourceNotFound(final HarryEmptyException exception, final HttpServletRequest request) {
 
 		ExceptionResponse error = new ExceptionResponse();
 		error.setErrorMessage(exception.getMessage());
@@ -25,7 +26,7 @@ public class ExceptionHandlerControllerAdvice {
 		return error;
 	}
 
-	@ExceptionHandler(Exception.class)
+	@ExceptionHandler(HarryServiceException.class)
 	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
 	public @ResponseBody ExceptionResponse handleException(final Exception exception, final HttpServletRequest request) {
 

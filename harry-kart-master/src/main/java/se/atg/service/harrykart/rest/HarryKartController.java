@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import se.atg.service.harrykart.domain.HarryResponse;
+import se.atg.service.harrykart.exc.HarryEmptyException;
 import se.atg.service.harrykart.exc.HarryServiceException;
-import se.atg.service.harrykart.exc.ResourceNotFoundException;
 import se.atg.service.harrykart.generated.HarryKartType;
 import se.atg.service.harrykart.service.HarryKartService;
 
@@ -29,7 +29,7 @@ public class HarryKartController {
 
 	@SuppressWarnings("unchecked")
 	@RequestMapping(method = RequestMethod.POST, path = "/play", consumes = "application/xml", produces = "application/json")
-	public @ResponseBody HarryResponse playHarryKart(@RequestBody String xmlString) throws ResourceNotFoundException, HarryServiceException {
+	public @ResponseBody HarryResponse playHarryKart(@RequestBody String xmlString) throws HarryEmptyException, HarryServiceException {
 
 		try {
 			JAXBContext jc = JAXBContext.newInstance("se.atg.service.harrykart.rest");
@@ -40,10 +40,11 @@ public class HarryKartController {
 		} catch (JAXBException e) {
 			e.printStackTrace();
 			throw new HarryServiceException("Kan ej konvertera xmlen. Jaxb error.");
-		}  catch (ResourceNotFoundException e) {
+		}  catch (HarryEmptyException e) {
 			e.printStackTrace();
 			throw e;
 		} catch (HarryServiceException e) {
+			e.printStackTrace();
 			throw e;
 		}  catch (Exception e) {
 			e.printStackTrace();

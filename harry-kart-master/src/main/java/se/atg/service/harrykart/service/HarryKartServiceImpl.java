@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 
 import se.atg.service.harrykart.domain.HarryResponse;
 import se.atg.service.harrykart.domain.Ranking;
+import se.atg.service.harrykart.exc.HarryEmptyException;
 import se.atg.service.harrykart.exc.HarryServiceException;
-import se.atg.service.harrykart.exc.ResourceNotFoundException;
 import se.atg.service.harrykart.generated.HarryKartType;
 import se.atg.service.harrykart.generated.LaneType;
 import se.atg.service.harrykart.generated.LoopType;
@@ -26,7 +26,7 @@ public class HarryKartServiceImpl implements HarryKartService {
 	private static final Logger logger = Logger.getLogger(HarryKartServiceImpl.class);
 
 	@Override
-	public HarryResponse getHarryResponse(JAXBElement<HarryKartType> hkt) throws HarryServiceException, ResourceNotFoundException {
+	public HarryResponse getHarryResponse(JAXBElement<HarryKartType> hkt) throws HarryServiceException, HarryEmptyException {
 
 		validate(hkt);
 
@@ -52,10 +52,6 @@ public class HarryKartServiceImpl implements HarryKartService {
 				}
 			}
 		}
-
-//		if (rankingList.size() < 1) {
-//			throw new ResourceNotFoundException("Tom returlista");
-//		}
 
 		if (rankingList.size() < 1) {
 			throw new HarryServiceException("Tom returlista");

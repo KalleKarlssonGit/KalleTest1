@@ -1,14 +1,14 @@
 package se.atg.service.harrykart.exc;
 
-public class ResourceNotFoundException extends Exception {
+public class HarryEmptyException extends Exception {
 
 	private static final long serialVersionUID = -8079454849611022224L;
 
-	public ResourceNotFoundException() {
+	public HarryEmptyException() {
 		super();
 	}
 
-	public ResourceNotFoundException(final String message) {
+	public HarryEmptyException(final String message) {
 		super(message);
 	}
 
