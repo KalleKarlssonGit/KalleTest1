@@ -33,24 +33,9 @@ public class HarryKartServiceImpl implements HarryKartService {
 	@SuppressWarnings("unchecked")
 	@Override
 	public HarryResponse getHarryResponse(String xmlString) throws HarryServiceException, HarryEmptyException {
-
-		HarryResponse hr = null;
-
-		JAXBElement<HarryKartType> hkt = null;
-		JAXBContext jc;
 		try {
-			jc = JAXBContext.newInstance("se.atg.service.harrykart.rest");
-			Unmarshaller um = jc.createUnmarshaller();
-			hkt = (JAXBElement<HarryKartType>) um.unmarshal(new StringReader(xmlString));
-
-			validate(hkt);
-
-			hr = getHarryResponseFromXmlAsJava(hkt);
-
-			return hr;
-		} catch (JAXBException e) {
-			e.printStackTrace();
-			throw new HarryServiceException("Can not convert xml.");
+			JAXBElement<HarryKartType> hkt = getXmlAsJavaObjectAndValidate(xmlString);
+			return getHarryResponseFromXmlAsJava(hkt);
 		}  catch (HarryEmptyException e) {
 			e.printStackTrace();
 			throw e;
@@ -61,7 +46,6 @@ public class HarryKartServiceImpl implements HarryKartService {
 			e.printStackTrace();
 			throw new RuntimeException("Unknown exception", e);
 		}
-
 	}
 
 	private HarryResponse getHarryResponseFromXmlAsJava(JAXBElement<HarryKartType> hkt) throws HarryEmptyException {
@@ -149,7 +133,21 @@ public class HarryKartServiceImpl implements HarryKartService {
 		return timeToCompleteRace;
 	}
 
-	private void validate(JAXBElement<HarryKartType> hkt) throws HarryServiceException {
+	@SuppressWarnings("unchecked")
+	private JAXBElement<HarryKartType> getXmlAsJavaObjectAndValidate(String xmlString) throws HarryServiceException {
+
+		JAXBElement<HarryKartType> hkt = null;
+
+		try {
+			JAXBContext jc = JAXBContext.newInstance("se.atg.service.harrykart.rest");
+			Unmarshaller um = jc.createUnmarshaller();
+			hkt = (JAXBElement<HarryKartType>) um.unmarshal(new StringReader(xmlString));
+		} catch (JAXBException e) {
+			e.printStackTrace();
+			throw new HarryServiceException("Can not convert xml.");
+		}
+
+
 		if (
 				(hkt != null)
 				&&
@@ -175,6 +173,8 @@ public class HarryKartServiceImpl implements HarryKartService {
 			logger.error("HarryKartServiceImpl getHarryResponse, Wrong input data. ts:" + System.currentTimeMillis());
 			throw new HarryServiceException("Invalid input data. Found inconsistent data");
 		}
+
+		return hkt;
 	}
 
 }
