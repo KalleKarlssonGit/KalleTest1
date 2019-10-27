@@ -49,7 +49,7 @@ public class HarryKartServiceImpl implements HarryKartService {
 	}
 
 	private HarryResponse getHarryResponseFromXmlAsJava(JAXBElement<HarryKartType> hkt) throws HarryEmptyException {
-
+		//Get result for all participants. All participants will be placed in this list, and is null if it doesnt finish.
 		List<Ranking> allRanking = getAllRanking(
 				hkt.getValue().getNumberOfLoops(),
 				hkt.getValue().getStartList().getParticipant(),
@@ -70,12 +70,7 @@ public class HarryKartServiceImpl implements HarryKartService {
 		return
 				participantTypeList.stream()
 				.map(x -> createRanking(numberOfLoops, x, loopTypeList))
-				.sorted(
-						(o1, o2)->
-							o1 != null && o2 != null?
-							o1.getTotalTime().compareTo(o2.getTotalTime())
-							:
-							o1 != null ? 1 : -1)
+				.sorted((o1, o2)-> o1 != null && o2 != null ? o1.getTotalTime().compareTo(o2.getTotalTime()) : o1 != null ? 1 : -1)
 				.collect(Collectors.toList());
 	}
 
@@ -103,7 +98,6 @@ public class HarryKartServiceImpl implements HarryKartService {
 	}
 
 	public Double getHorseTotalTime(BigInteger numberOfLoops, ParticipantType participantType, List<LoopType> loopTypeList) {
-
 		Double timeToCompleteRace = 0.0;
 
 		int speed = participantType.getBaseSpeed().intValue();
@@ -135,7 +129,6 @@ public class HarryKartServiceImpl implements HarryKartService {
 
 	@SuppressWarnings("unchecked")
 	private JAXBElement<HarryKartType> getXmlAsJavaObjectAndValidate(String xmlString) throws HarryServiceException {
-
 		JAXBElement<HarryKartType> hkt = null;
 
 		try {
@@ -147,7 +140,12 @@ public class HarryKartServiceImpl implements HarryKartService {
 			throw new HarryServiceException("Can not convert xml.");
 		}
 
+		validate(hkt);
 
+		return hkt;
+	}
+
+	private void validate(JAXBElement<HarryKartType> hkt) throws HarryServiceException {
 		if (
 				(hkt != null)
 				&&
@@ -173,8 +171,6 @@ public class HarryKartServiceImpl implements HarryKartService {
 			logger.error("HarryKartServiceImpl getHarryResponse, Wrong input data. ts:" + System.currentTimeMillis());
 			throw new HarryServiceException("Invalid input data. Found inconsistent data");
 		}
-
-		return hkt;
 	}
 
 }
