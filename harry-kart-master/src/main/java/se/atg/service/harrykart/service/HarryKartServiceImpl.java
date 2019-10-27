@@ -1,12 +1,15 @@
 package se.atg.service.harrykart.service;
 
+import java.io.StringReader;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.stream.Collectors;
 
+import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -23,137 +26,129 @@ import se.atg.service.harrykart.generated.ParticipantType;
 @Service
 public class HarryKartServiceImpl implements HarryKartService {
 
+	private static final int TOP = 3;
+
 	private static final Logger logger = Logger.getLogger(HarryKartServiceImpl.class);
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public HarryResponse getHarryResponse(JAXBElement<HarryKartType> hkt) throws HarryServiceException, HarryEmptyException {
+	public HarryResponse getHarryResponse(String xmlString) throws HarryServiceException, HarryEmptyException {
 
-		validate(hkt);
+		HarryResponse hr = null;
 
-		TreeMap<Double, List<ParticipantType>> calculatedTimes = calculate(hkt);
+		JAXBElement<HarryKartType> hkt = null;
+		JAXBContext jc;
+		try {
+			jc = JAXBContext.newInstance("se.atg.service.harrykart.rest");
+			Unmarshaller um = jc.createUnmarshaller();
+			hkt = (JAXBElement<HarryKartType>) um.unmarshal(new StringReader(xmlString));
 
-		List<Ranking> rankingList = getTop3RankingList(calculatedTimes);
+			validate(hkt);
 
-		return new HarryResponse(rankingList);
+			hr = getHarryResponseFromXmlAsJava(hkt);
+
+			return hr;
+		} catch (JAXBException e) {
+			e.printStackTrace();
+			throw new HarryServiceException("Can not convert xml.");
+		}  catch (HarryEmptyException e) {
+			e.printStackTrace();
+			throw e;
+		} catch (HarryServiceException e) {
+			e.printStackTrace();
+			throw e;
+		}  catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("Unknown exception", e);
+		}
+
 	}
 
-	/**
-	 * Get top 3
-	 * @param calculatedTimes
-	 * @return
-	 */
-	private List<Ranking> getTop3RankingList(TreeMap<Double, List<ParticipantType>> calculatedTimes) throws HarryServiceException {
-		List<Ranking> rankingList = new ArrayList<>();
+	private HarryResponse getHarryResponseFromXmlAsJava(JAXBElement<HarryKartType> hkt) throws HarryEmptyException {
 
-		for (Map.Entry<Double, List<ParticipantType>> entry : calculatedTimes.entrySet()) {
-			for (ParticipantType participantType : entry.getValue()) {
-				if (rankingList.size() < 3) {
-					rankingList.add(new Ranking((rankingList.size() + 1), participantType.getName()));
-				}
+		List<Ranking> allRanking = getAllRanking(
+				hkt.getValue().getNumberOfLoops(),
+				hkt.getValue().getStartList().getParticipant(),
+				hkt.getValue().getPowerUps().getLoop());
+
+		List<Ranking> topXRankingList = getTopX(allRanking);
+
+		if (topXRankingList.size() == 0) {
+			logger.error("HarryKartServiceImpl getHarryResponseFromXmlAsJava, no finishers. ts:" + System.currentTimeMillis());
+			throw new HarryEmptyException("No finishers.");
+		}
+
+		return new HarryResponse(topXRankingList);
+	}
+
+	//Java8
+	private List<Ranking> getAllRanking(BigInteger numberOfLoops, List<ParticipantType> participantTypeList, List<LoopType> loopTypeList) {
+		return
+				participantTypeList.stream()
+				.map(x -> createRanking(numberOfLoops, x, loopTypeList))
+				.sorted(
+						(o1, o2)->
+							o1 != null && o2 != null?
+							o1.getTotalTime().compareTo(o2.getTotalTime())
+							:
+							o1 != null ? 1 : -1)
+				.collect(Collectors.toList());
+	}
+
+	public Ranking createRanking(BigInteger numberOfLoops, ParticipantType pt, List<LoopType> loopTypeList) {
+		Ranking rank = new Ranking(pt.getName());
+		Double horseTotalTime = getHorseTotalTime(numberOfLoops, pt, loopTypeList);
+		rank.setTotalTime(horseTotalTime);
+		return horseTotalTime != null ? rank : null;
+	}
+
+	private List<Ranking> getTopX(List<Ranking> allRanking) {
+		List<Ranking> rankingList = new ArrayList<>();
+		for (int i = 0; i < allRanking.size(); i++) {
+			Ranking tmpRank = allRanking.get(i);
+			if (tmpRank == null) {
+				continue;
+			}
+			tmpRank.setPosition(rankingList.size() + 1);
+			rankingList.add(tmpRank);
+			if (rankingList.size() == TOP) {
+				return rankingList;
 			}
 		}
-
-		if (rankingList.size() < 1) {
-			throw new HarryServiceException("Tom returlista");
-		}
-
 		return rankingList;
 	}
 
-	/**
-	 *
-	 * @param hkt
-	 * @return Treemap where
-	 * 					key: time to complete race.
-	 * 					value: list of participants for this key
-	 * @throws RuntimeException
-	 */
-	private TreeMap<Double, List<ParticipantType>> calculate(JAXBElement<HarryKartType> hkt) {
+	public Double getHorseTotalTime(BigInteger numberOfLoops, ParticipantType participantType, List<LoopType> loopTypeList) {
 
-		BigInteger numberOfLoops = hkt.getValue().getNumberOfLoops();
+		Double timeToCompleteRace = 0.0;
 
-		List<ParticipantType> participantTypeList = hkt.getValue().getStartList().getParticipant();
+		int speed = participantType.getBaseSpeed().intValue();
 
-		List<LoopType> loopTypeList = hkt.getValue().getPowerUps().getLoop();
-
-		TreeMap<Double, List<ParticipantType>> result = new TreeMap<>();
-
-		try {
-
-			for (ParticipantType participantType : participantTypeList) {
-
-				int speed = participantType.getBaseSpeed().intValue();
-				if (speed <= 0) {
-					continue;
-				}
-
-				/*If a horse gets speed 0 or negative, it will never finish the race and is disqualified. */
-				boolean disqualifyHorse = false;
-
-				double timeToCompleteRace = 0.0;
-
-				for (int k = 0; k < numberOfLoops.intValue(); k++) {
-					for (LoopType loopType : loopTypeList) {
-						if ((loopType.getNumber() != null) && (loopType.getNumber().intValue() == k)) {
-
-							List<LaneType> laneTypeList = loopType.getLane();
-
-							for (LaneType laneType : laneTypeList) {
-								if (laneType.getNumber() != null && laneType.getNumber().equals(participantType.getLane())) {
-									speed += laneType.getValue().intValue();
-
-									if (speed <= 0) {
-										disqualifyHorse = true;
-									}
-
-									break;
-								}
-
-							}
-
-							if (disqualifyHorse) {
-								break;
-							}
-
-						}
-
-					}
-
-					if (!disqualifyHorse) {
-						timeToCompleteRace += (1000 / (double)speed);
-					}
-
-				}
-
-				if (!disqualifyHorse) {
-					if (result.get(timeToCompleteRace) != null) {
-						/* More than one participant can have the same total time. */
-						List<ParticipantType> value = result.get(timeToCompleteRace);
-						value.add(participantType);
-						result.put(timeToCompleteRace, value);
-					} else {
-						List<ParticipantType> value = new ArrayList<ParticipantType>();
-						value.add(participantType);
-						result.put(timeToCompleteRace, value);
-					}
-				}
-
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("HarryKartServiceImpl calculate, exception. ts:" + System.currentTimeMillis() + ", message:" + e.getMessage(), e);
-			throw new RuntimeException(e);
+		if (speed <= 0) {
+			return null;
 		}
 
-		return result;
+		for (int k = 1; k <= numberOfLoops.intValue(); k++) {
+			for (LoopType loopType : loopTypeList) {
+				if ((loopType.getNumber() != null) && (loopType.getNumber().intValue() == k)) {
+					List<LaneType> laneTypeList = loopType.getLane();
+					for (LaneType laneType : laneTypeList) {
+						if (laneType.getNumber() != null && laneType.getNumber().equals(participantType.getLane())) {
+							speed += laneType.getValue().intValue();
+							if (speed <= 0) {
+								return null;
+							}
+							break;
+						}
+					}
+				}
+			}
+			timeToCompleteRace += (1000 / (double) speed);
+		}
+
+		return timeToCompleteRace;
 	}
 
-	/**
-	 * Ensure all data exists.
-	 * @param hkt
-	 * @return
-	 */
 	private void validate(JAXBElement<HarryKartType> hkt) throws HarryServiceException {
 		if (
 				(hkt != null)
@@ -177,13 +172,9 @@ public class HarryKartServiceImpl implements HarryKartService {
 				(hkt.getValue().getPowerUps().getLoop().size() > 0)
 				) {
 		} else {
-			// throws HarryServiceException, ResourceNotFoundException
-//			if () {
-				logger.error("HarryKartServiceImpl getHarryResponse, Wrong input data. ts:" + System.currentTimeMillis());
-				throw new HarryServiceException("Invalid input data.");
-//			}
+			logger.error("HarryKartServiceImpl getHarryResponse, Wrong input data. ts:" + System.currentTimeMillis());
+			throw new HarryServiceException("Invalid input data. Found inconsistent data");
 		}
-
 	}
 
 }

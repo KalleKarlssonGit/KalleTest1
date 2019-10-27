@@ -1,34 +1,57 @@
 package se.atg.service.harrykart.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class Ranking {
 
-	private int position;
-	private String horse;
+	private Integer position;
+	private String horseName;
+
+	@JsonIgnore
+	private Double totalTime;
 
 	public Ranking() {
 		super();
 	}
 
-	public Ranking(int position, String horse) {
+	public Ranking(String horseName) {
+		super();
+		this.horseName = horseName;
+	}
+
+	public Ranking(Integer position, String horseName) {
 		super();
 		this.position = position;
-		this.horse = horse;
+		this.horseName = horseName;
 	}
 
 	public int getPosition() {
 		return position;
 	}
 
-	public void setPosition(int position) {
+	public void setPosition(Integer position) {
 		this.position = position;
 	}
 
-	public String getHorse() {
-		return horse;
+	public String getHorseName() {
+		return horseName;
 	}
 
-	public void setHorse(String horse) {
-		this.horse = horse;
+	public void setHorseName(String horseName) {
+		this.horseName = horseName;
+	}
+
+	public Double getTotalTime() {
+		return totalTime;
+	}
+
+	public void setTotalTime(Double totalTime) {
+		this.totalTime = totalTime;
+	}
+
+	@Override
+	public String toString() {
+		return "Ranking [position=" + position + ", horseName=" + horseName + ", totalTime=" + totalTime + "]";
 	}
 
 }
