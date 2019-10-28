@@ -55,6 +55,7 @@
 //		System.out.println("res:" + res);
 //		Double shouldBe = new Double(253.8461538461);
 //		assertTrue(shouldBe.equals(res));
+		//assertTrue(shouldBe.doubleval +0.1 > res.doubleval && shouldBe.doubleval -0.1 < res.doubleval ));
 //	}
 //
 //	@Test
