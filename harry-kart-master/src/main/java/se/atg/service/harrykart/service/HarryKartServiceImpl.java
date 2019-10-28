@@ -48,7 +48,8 @@ public class HarryKartServiceImpl implements HarryKartService {
 		}
 	}
 
-	private HarryResponse getHarryResponseFromXmlAsJava(JAXBElement<HarryKartType> hkt) throws HarryEmptyException {
+	@Override
+	public HarryResponse getHarryResponseFromXmlAsJava(JAXBElement<HarryKartType> hkt) throws HarryEmptyException {
 		//Get result for all participants. All participants will be placed in this list, and is null if it doesnt finish.
 		List<Ranking> allRanking = getAllRanking(
 				hkt.getValue().getNumberOfLoops(),
@@ -100,14 +101,15 @@ public class HarryKartServiceImpl implements HarryKartService {
 	}
 
 	//Imperative approach, not Java8
+	@Override
 	public Double getHorseTotalTime(BigInteger numberOfLoops, ParticipantType participantType, List<LoopType> loopTypeList) {
-		Double timeToCompleteRace = 0.0;
-
 		int speed = participantType.getBaseSpeed().intValue();
 
 		if (speed <= 0) {
 			return null;
 		}
+
+		Double  timeToCompleteRace = (1000 / (double) speed);
 
 		for (int k = 1; k <= numberOfLoops.intValue(); k++) {
 			for (LoopType loopType : loopTypeList) {
