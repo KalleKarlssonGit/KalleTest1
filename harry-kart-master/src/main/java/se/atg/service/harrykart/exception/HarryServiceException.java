@@ -1,4 +1,4 @@
-package se.atg.service.harrykart.exc;
+package se.atg.service.harrykart.exception;
 
 public class HarryServiceException extends Exception {
 

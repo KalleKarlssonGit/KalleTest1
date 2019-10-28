@@ -16,8 +16,8 @@ import org.springframework.stereotype.Service;
 
 import se.atg.service.harrykart.domain.HarryResponse;
 import se.atg.service.harrykart.domain.Ranking;
-import se.atg.service.harrykart.exc.HarryEmptyException;
-import se.atg.service.harrykart.exc.HarryServiceException;
+import se.atg.service.harrykart.exception.HarryEmptyException;
+import se.atg.service.harrykart.exception.HarryServiceException;
 import se.atg.service.harrykart.generated.HarryKartType;
 import se.atg.service.harrykart.generated.LaneType;
 import se.atg.service.harrykart.generated.LoopType;
@@ -28,7 +28,7 @@ public class HarryKartServiceImpl implements HarryKartService {
 
 	private static final int TOP = 3;
 
-	private static final Logger logger = Logger.getLogger(HarryKartServiceImpl.class);
+	private static final Logger LOGGER = Logger.getLogger(HarryKartServiceImpl.class);
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -55,10 +55,11 @@ public class HarryKartServiceImpl implements HarryKartService {
 				hkt.getValue().getStartList().getParticipant(),
 				hkt.getValue().getPowerUps().getLoop());
 
+		//Get the first few from allRanking (from varieble TOP).
 		List<Ranking> topXRankingList = getTopX(allRanking);
 
 		if (topXRankingList.size() == 0) {
-			logger.error("HarryKartServiceImpl getHarryResponseFromXmlAsJava, no finishers. ts:" + System.currentTimeMillis());
+			LOGGER.error("HarryKartServiceImpl getHarryResponseFromXmlAsJava, no finishers. ts:" + System.currentTimeMillis());
 			throw new HarryEmptyException("No finishers.");
 		}
 
@@ -81,6 +82,7 @@ public class HarryKartServiceImpl implements HarryKartService {
 		return horseTotalTime != null ? rank : null;
 	}
 
+	//Imperative approach, not Java8
 	private List<Ranking> getTopX(List<Ranking> allRanking) {
 		List<Ranking> rankingList = new ArrayList<>();
 		for (int i = 0; i < allRanking.size(); i++) {
@@ -97,6 +99,7 @@ public class HarryKartServiceImpl implements HarryKartService {
 		return rankingList;
 	}
 
+	//Imperative approach, not Java8
 	public Double getHorseTotalTime(BigInteger numberOfLoops, ParticipantType participantType, List<LoopType> loopTypeList) {
 		Double timeToCompleteRace = 0.0;
 
@@ -147,6 +150,8 @@ public class HarryKartServiceImpl implements HarryKartService {
 
 	private void validate(JAXBElement<HarryKartType> hkt) throws HarryServiceException {
 		if (
+				(
+
 				(hkt != null)
 				&&
 				(hkt.getValue() != null)
@@ -166,9 +171,11 @@ public class HarryKartServiceImpl implements HarryKartService {
 				(hkt.getValue().getPowerUps().getLoop() != null)
 				&&
 				(hkt.getValue().getPowerUps().getLoop().size() > 0)
+
+				) == false
+
 				) {
-		} else {
-			logger.error("HarryKartServiceImpl getHarryResponse, Wrong input data. ts:" + System.currentTimeMillis());
+			LOGGER.error("HarryKartServiceImpl getHarryResponse, Wrong input data. ts:" + System.currentTimeMillis());
 			throw new HarryServiceException("Invalid input data. Found inconsistent data");
 		}
 	}

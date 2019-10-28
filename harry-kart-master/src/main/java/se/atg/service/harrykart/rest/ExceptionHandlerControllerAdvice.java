@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-import se.atg.service.harrykart.exc.ExceptionResponse;
-import se.atg.service.harrykart.exc.HarryEmptyException;
-import se.atg.service.harrykart.exc.HarryServiceException;
+import se.atg.service.harrykart.exception.ExceptionResponse;
+import se.atg.service.harrykart.exception.HarryEmptyException;
+import se.atg.service.harrykart.exception.HarryServiceException;
 
 @ControllerAdvice
 public class ExceptionHandlerControllerAdvice {

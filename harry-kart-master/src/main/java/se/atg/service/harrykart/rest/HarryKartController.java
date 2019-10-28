@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import se.atg.service.harrykart.domain.HarryResponse;
-import se.atg.service.harrykart.exc.HarryEmptyException;
-import se.atg.service.harrykart.exc.HarryServiceException;
+import se.atg.service.harrykart.exception.HarryEmptyException;
+import se.atg.service.harrykart.exception.HarryServiceException;
 import se.atg.service.harrykart.service.HarryKartService;
 
 @RestController

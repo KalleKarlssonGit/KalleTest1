@@ -1,4 +1,4 @@
-package se.atg.service.harrykart.exc;
+package se.atg.service.harrykart.exception;
 
 public class ExceptionResponse {
 	private String errorMessage;
