@@ -154,28 +154,27 @@ public class HarryKartServiceImpl implements HarryKartService {
 		if (
 				(
 
-				(hkt != null)
-				&&
-				(hkt.getValue() != null)
-				&&
-				(hkt.getValue().getNumberOfLoops() != null)
-				&&
-				(hkt.getValue().getNumberOfLoops().intValue() > 0)
-				&&
-				(hkt.getValue().getStartList() != null)
-				&&
-				(hkt.getValue().getStartList().getParticipant() != null)
-				&&
-				(hkt.getValue().getStartList().getParticipant().size() > 0)
-				&&
-				(hkt.getValue().getPowerUps() != null)
-				&&
-				(hkt.getValue().getPowerUps().getLoop() != null)
-				&&
-				(hkt.getValue().getPowerUps().getLoop().size() > 0)
+					(hkt != null)
+					&&
+					(hkt.getValue() != null)
+					&&
+					(hkt.getValue().getNumberOfLoops() != null)
+					&&
+					(hkt.getValue().getNumberOfLoops().intValue() > 0)
+					&&
+					(hkt.getValue().getStartList() != null)
+					&&
+					(hkt.getValue().getStartList().getParticipant() != null)
+					&&
+					(hkt.getValue().getStartList().getParticipant().size() > 0)
+					&&
+					(hkt.getValue().getPowerUps() != null)
+					&&
+					(hkt.getValue().getPowerUps().getLoop() != null)
+					&&
+					(hkt.getValue().getPowerUps().getLoop().size() > 0)
 
 				) == false
-
 				) {
 			LOGGER.error("HarryKartServiceImpl getHarryResponse, Wrong input data. ts:" + System.currentTimeMillis());
 			throw new HarryServiceException("Invalid input data. Found inconsistent data");
